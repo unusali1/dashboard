@@ -1,16 +1,14 @@
-import React from 'react';
+import React from "react";
 
 const FieldSet = ({ label, children }) => {
   return (
-    <fieldset className="border border-gray-300 rounded-md p-4">
+    <fieldset className="border border-gray-300 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/40 transition-all duration-200 hover:border-blue-400">
       {label && (
-        <legend className="text-sm font-medium text-gray-700 px-2">
+        <legend className="px-2 text-sm font-semibold text-gray-700 dark:text-gray-200 tracking-wide">
           {label}
         </legend>
       )}
-      <div className="space-y-2">
-        {children}
-      </div>
+      <div className="mt-2 space-y-3">{children}</div>
     </fieldset>
   );
 };
