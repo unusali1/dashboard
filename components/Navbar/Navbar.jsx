@@ -21,29 +21,40 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import {useSidebar } from "@/components/ui/sidebar";
 
 const Navbar = () => {
   const { toggleSidebar, open, isMobile } = useSidebar();
   const [theme, setTheme] = useState("light");
 
-  // toggle theme mode
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setTheme(prefersDark ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", prefersDark);
+    }
+  }, []);
+
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   return (
     <div className="w-full">
-      <nav className="flex items-center justify-between px-4 py-3 sticky top-0 bg-background/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 z-20">
-        {/* LEFT: Sidebar Toggle */}
+      <nav className="flex items-center justify-between px-4 py-3 sticky top-0  z-20">
         {isMobile ? (
           <Button
             variant="outline"
@@ -68,13 +79,12 @@ const Navbar = () => {
           </Button>
         )}
 
-        {/* RIGHT: Name, Theme, Profile */}
         <div className="flex items-center gap-4">
           <span className="font-semibold text-slate-800 dark:text-slate-100">
             Md Unus Ali
           </span>
 
-          {/* Theme Toggle */}
+          {/* Theme Toggle Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -125,9 +135,9 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* subtle divider */}
-      <div className="mb-4">
-        <hr className="my-1 border-t border-dashed border-slate-300/50 dark:border-slate-600/50" />
+     
+      <div className="mb-2">
+        <hr className="my-2 border-t border-dashed border-slate-300/50 dark:border-slate-600/50" />
       </div>
     </div>
   );

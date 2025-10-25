@@ -8,7 +8,9 @@ const FieldSet = ({ label, children }) => {
           {label}
         </legend>
       )}
-      <div className="mt-2 space-y-3">{children}</div>
+      <div className="mt-2 space-y-3">
+        {children}
+        </div>
     </fieldset>
   );
 };

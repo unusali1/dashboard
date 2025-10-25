@@ -11,22 +11,16 @@ import {
 } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Smile, Meh, Frown, Edit, Trash } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  ResponsiveContainer,
-} from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Smile, Meh, Frown, Edit, Trash, Plus } from "lucide-react";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+import Navbar from "@/components/Navbar/Navbar";
+import { useRouter } from "next/navigation";
 
 const fetchOrders = async () => {
   const res = await axios.get(
@@ -36,10 +30,11 @@ const fetchOrders = async () => {
 };
 
 const OrderListPage = () => {
+  const router = useRouter();
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders"],
     queryFn: fetchOrders,
-    retry:false
+    retry: false,
   });
 
   const columns = useMemo(
@@ -87,9 +82,7 @@ const OrderListPage = () => {
               : val === "Pending"
               ? "bg-yellow-500"
               : "bg-red-500";
-          return (
-            <Badge className={`${color} text-white`}>{val}</Badge>
-          );
+          return <Badge className={`${color} text-white`}>{val}</Badge>;
         },
       },
       {
@@ -97,10 +90,7 @@ const OrderListPage = () => {
         accessorKey: "deliveryStatus",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <Progress
-              value={row.original.deliveryProgress}
-              className="w-24"
-            />
+            <Progress value={row.original.deliveryProgress} className="w-24" />
             <span className="text-xs text-gray-600">
               {row.original.deliveryStatus}
             </span>
@@ -109,7 +99,7 @@ const OrderListPage = () => {
       },
       {
         header: "Total Amount",
-        accessorKey: "total",
+        accessorKey: "totalAmount",
         cell: ({ getValue }) => (
           <span className="font-medium">
             ${parseFloat(getValue()).toFixed(2)}
@@ -121,18 +111,15 @@ const OrderListPage = () => {
         accessorKey: "feedback",
         cell: ({ getValue }) => {
           const val = getValue();
-          if (val === "happy")
-            return <Smile className="text-green-500" />;
-          if (val === "neutral")
-            return <Meh className="text-yellow-500" />;
+          if (val === "happy") return <Smile className="text-green-500" />;
+          if (val === "neutral") return <Meh className="text-yellow-500" />;
           return <Frown className="text-red-500" />;
         },
       },
       {
         header: "Created At",
         accessorKey: "createdAt",
-        cell: ({ getValue }) =>
-          new Date(getValue()).toLocaleString(),
+        cell: ({ getValue }) => new Date(getValue()).toLocaleString(),
       },
       {
         header: "Actions",
@@ -160,90 +147,224 @@ const OrderListPage = () => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  if (isLoading)
-    return <p className="p-8 text-center">Loading orders...</p>;
+ 
+  if (isLoading) {
+    return (
+      <div className="w-full dark:bg-gray-900">
+        <Navbar />
+        <div className="flex justify-between pl-6 pr-6">
+          <h2>Order List</h2>
+          <Button
+            size="lg"
+            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            disabled
+          >
+            <Plus className="h-4 w-4 mr-2" /> Create New Order
+          </Button>
+        </div>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, index) => (
+              <Card key={index} className="p-4">
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-24" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-8 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="rounded-lg border shadow-sm overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100 dark:bg-gray-800">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, rowIndex) => (
+                  <tr
+                    key={rowIndex}
+                    className="border-t hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    {columns.map((_, colIndex) => (
+                      <td key={colIndex} className="px-4 py-3">
+                        <Skeleton className="h-6 w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="w-full dark:bg-gray-900">
+        <Navbar />
+        <div className="flex justify-between pl-6 pr-6">
+          <h2>Order List</h2>
+          <Button
+            size="lg"
+            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            onClick={() => router.push("/dashboard/orders/create")}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Create New Order
+          </Button>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Overview Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard title="Total Orders" value={0} data={[]} />
+            <StatCard title="Delivered %" value="0%" data={[]} />
+            <StatCard title="Pending Deliveries" value={0} data={[]} />
+            <StatCard
+              title="Avg. Client Satisfaction"
+              value="0% 😀"
+              data={[]}
+            />
+          </div>
+
+          <div className="rounded-lg border shadow-sm overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100 dark:bg-gray-800">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No orders found. Click "Create New Order" to add one.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Orders"
-          value={orders.length}
-          data={orders}
-        />
-        <StatCard
-          title="Delivered %"
-          value={`${Math.round(
-            (orders.filter((o) => o.deliveryStatus === "Delivered").length /
-              orders.length) *
-              100
-          )}%`}
-          data={orders}
-        />
-        <StatCard
-          title="Pending Deliveries"
-          value={
-            orders.filter((o) => o.deliveryStatus !== "Delivered")
-              .length
-          }
-          data={orders}
-        />
-        <StatCard
-          title="Avg. Client Satisfaction"
-          value={`${Math.round(
-            (orders.filter((o) => o.feedback === "happy").length /
-              orders.length) *
-              100
-          )}% 😀`}
-          data={orders}
-        />
+    <div className="w-full dark:bg-gray-900">
+      <Navbar />
+      <div className="flex justify-between pl-6 pr-6">
+        <h2>Order List</h2>
+        <Button
+          size="lg"
+          className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          onClick={() => router.push("/dashboard/orders/create")}
+        >
+          <Plus className="h-4 w-4 mr-2" /> Create New Order
+        </Button>
       </div>
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard title="Total Orders" value={orders.length} data={orders} />
+          <StatCard
+            title="Delivered %"
+            value={`${Math.round(
+              (orders.filter((o) => o.deliveryStatus === "Delivered").length /
+                orders.length) *
+                100
+            )}%`}
+            data={orders}
+          />
+          <StatCard
+            title="Pending Deliveries"
+            value={
+              orders.filter((o) => o.deliveryStatus !== "Delivered").length
+            }
+            data={orders}
+          />
+          <StatCard
+            title="Avg. Client Satisfaction"
+            value={`${Math.round(
+              (orders.filter((o) => o.feedback === "happy").length /
+                orders.length) *
+                100
+            )}% 😀`}
+            data={orders}
+          />
+        </div>
 
-      {/* Table */}
-      <div className="rounded-lg border shadow-sm overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100 dark:bg-gray-800">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-200"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-t hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3">
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="rounded-lg border shadow-sm overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100 dark:bg-gray-800">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="border-t hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-3">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 };
 
-// Overview Stat Card Component
 const StatCard = ({ title, value, data }) => {
   const chartData = data.slice(0, 7).map((d, i) => ({
     name: `D${i + 1}`,

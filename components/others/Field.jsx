@@ -16,11 +16,7 @@ const Field = ({ label, children, htmlFor, error, description }) => {
           {label}
         </Label>
       )}
-      <div
-        className={`rounded-lg border bg-white dark:bg-gray-900 transition-colors ${
-          error ? "border-red-500 focus-within:border-red-600" : "border-gray-300 focus-within:border-blue-500"
-        } px-3 py-2 shadow-sm`}
-      >
+      <div className="flex flex-col gap-1.5">
         {children}
       </div>
 

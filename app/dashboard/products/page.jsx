@@ -27,12 +27,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -41,15 +40,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeftRight, ChevronDown, Plus } from "lucide-react";
+import { ArrowLeftRight, Plus } from "lucide-react";
 
 const StockIndicator = ({ stock }) => {
-  let bg = "bg-green-100 text-green-800";
-  if (stock < 10) bg = "bg-red-100 text-red-800";
-  else if (stock < 50) bg = "bg-yellow-100 text-yellow-800";
+  let bg =
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  if (stock < 10)
+    bg = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+  else if (stock < 50)
+    bg =
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${bg}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${bg}`}
     >
       {stock} pcs
     </span>
@@ -60,8 +63,10 @@ const StatusChip = ({ status }) => {
   const active = /active/i.test(status);
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${
-        active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+        active
+          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
       }`}
     >
       {active ? "Active" : "Inactive"}
@@ -78,7 +83,7 @@ const EmojiRating = ({ score }) => {
 const ProgressBar = ({ value }) => {
   const percent = Math.max(0, Math.min(100, value));
   return (
-    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+    <div className="w-24 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
       <div
         style={{ width: `${percent}%` }}
         className="h-full rounded-full bg-blue-500"
@@ -104,13 +109,13 @@ const Sparkline = ({ values = [] }) => {
     <svg width={w} height={h} className="inline-block align-middle">
       <polyline
         fill="none"
-        stroke="#2563eb"
+        stroke="#3b82f6"
         strokeWidth="1.5"
         points={points}
       />
       <polyline
         fill="none"
-        stroke="#bfdbfe"
+        stroke="#93c5fd"
         strokeWidth="6"
         strokeLinecap="round"
         points={points}
@@ -121,7 +126,7 @@ const Sparkline = ({ values = [] }) => {
 };
 
 const fetchProducts = async () => {
-  const url = `https://68f9c1b2ef8b2e621e7d4f9a.mockapi.io/ap1/v1/products?page`;
+  const url = `https://68f9c1b2ef8b2e621e7d4f9a.mockapi.io/ap1/v1/products`;
   const resp = await axios.get(url);
   return {
     data: resp.data,
@@ -132,7 +137,6 @@ const fetchProducts = async () => {
 export default function ProductListPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const currentPage = page;
   const [globalFilter, setGlobalFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -140,32 +144,15 @@ export default function ProductListPage() {
   const [priceMax, setPriceMax] = useState("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+
   const {
     data: result,
-    error,
     isLoading,
     isFetching,
   } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000,
   });
-
-  const totalPages = Math.ceil( result?.data?.length / 10);
-  const getPages = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  };
-
-  const handlePageClick = (page) => {
-    if (page !== currentPage) {
-       setPage(page);
-    }
-  };
 
   const enrichedData = useMemo(() => {
     if (!result?.data) return [];
@@ -179,28 +166,21 @@ export default function ProductListPage() {
     }));
   }, [result]);
 
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(enrichedData.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return enrichedData.slice(start, end);
+  }, [page, enrichedData]);
+
+  const handlePageClick = (p) => {
+    if (p >= 1 && p <= totalPages) setPage(p);
+  };
+
   const columnHelper = createColumnHelper();
   const columns = useMemo(
     () => [
-      columnHelper.display({
-        id: "select",
-        header: ({ table }) => (
-          <input
-            type="checkbox"
-            className="form-checkbox"
-            checked={table.getIsAllPageRowsSelected()}
-            onChange={table.getToggleAllPageRowsSelectedHandler()}
-          />
-        ),
-        cell: ({ row }) => (
-          <input
-            type="checkbox"
-            className="form-checkbox"
-            checked={row.getIsSelected()}
-            onChange={row.getToggleSelectedHandler()}
-          />
-        ),
-      }),
       columnHelper.accessor("productImage", {
         id: "image",
         header: "Image",
@@ -208,32 +188,37 @@ export default function ProductListPage() {
           <img
             src={info.getValue()}
             alt={info.row.original.productName}
-            className="w-10 h-10 rounded-md object-cover"
+            className="w-12 h-12 rounded-md object-cover border border-gray-200 dark:border-gray-700"
           />
         ),
       }),
       columnHelper.accessor("productName", {
         header: "Product",
-        cell: (info) => <div className="font-medium">{info.getValue()}</div>,
-        enableSorting: true,
+        cell: (info) => (
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {info.getValue()}
+          </div>
+        ),
       }),
       columnHelper.accessor("category", {
         header: "Category",
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.accessor("sku", {
-        header: "SKU",
-        cell: (info) => info.getValue(),
+        cell: (info) => (
+          <div className="text-gray-700 dark:text-gray-300">
+            {info.getValue()}
+          </div>
+        ),
       }),
       columnHelper.accessor("price", {
         header: "Price",
-        cell: (info) => <div>${info.getValue()}</div>,
-        enableSorting: true,
+        cell: (info) => (
+          <div className="text-gray-700 dark:text-gray-300">
+            ${info.getValue()}
+          </div>
+        ),
       }),
       columnHelper.accessor("stock", {
         header: "Stock",
         cell: (info) => <StockIndicator stock={info.getValue()} />,
-        enableSorting: true,
       }),
       columnHelper.display({
         id: "status",
@@ -241,11 +226,6 @@ export default function ProductListPage() {
         cell: (info) => (
           <StatusChip status={info.row.original.activeStatus || "inactive"} />
         ),
-      }),
-      columnHelper.display({
-        id: "csat",
-        header: "Client",
-        cell: (info) => <EmojiRating score={info.row.original.csat} />,
       }),
       columnHelper.display({
         id: "progress",
@@ -262,22 +242,25 @@ export default function ProductListPage() {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <button
-              className="text-sm px-2 py-1 bg-blue-600 text-white rounded-md"
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-900/30"
               onClick={() => alert(`Edit ${row.original.productName}`)}
             >
               Edit
-            </button>
-            <button
-              className="text-sm px-2 py-1 bg-red-100 text-red-700 rounded-md"
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900/30"
               onClick={() => {
-                if (confirm(`Delete ${row.original.productName}?`)) {
+                if (confirm(`Delete ${row.original.productName}?`))
                   alert("Deleted (mock)");
-                }
               }}
             >
               Delete
-            </button>
+            </Button>
           </div>
         ),
       }),
@@ -286,171 +269,150 @@ export default function ProductListPage() {
   );
 
   const table = useReactTable({
-    data: enrichedData,
+    data: paginatedData,
     columns,
-    state: {
-      globalFilter,
-      columnVisibility,
-      rowSelection,
-    },
+    state: { globalFilter, columnVisibility, rowSelection },
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    enableRowSelection: true,
-    globalFilterFn: "includesString",
-    debugTable: false,
   });
-
-
-  useEffect(() => {
-    const combined = [
-      globalFilter || "",
-      categoryFilter || "",
-      statusFilter || "",
-      priceMin || "",
-      priceMax || "",
-    ].join(" ");
-    table.setGlobalFilter(combined);
-  }, [globalFilter, categoryFilter, statusFilter, priceMin, priceMax]);
 
   const selectedRows = Object.keys(rowSelection).length;
 
   return (
-    <div className="w-full min-h-screen bg-white">
+    <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Navbar />
-      <div className="p-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-2xl font-semibold">Products</h1>
-
-          <div className="flex gap-2 items-center">
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/products/create")}>
-              <Plus /> Add Product
-            </Button>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-row justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Products
+          </h1>
+          <Button
+            size="lg"
+            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            onClick={() => router.push("/dashboard/products/create")}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add Product
+          </Button>
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
-          <Input
-            placeholder="Search product..."
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="md:col-span-2"
-          />
-          <Input
-            placeholder="Category"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          />
-          <Input
-            placeholder="Status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          />
-
-          <Input
-            placeholder="Min price"
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-            type="number"
-          />
-          <Input
-            placeholder="Max price"
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-            type="number"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          {[globalFilter, categoryFilter, statusFilter, priceMin, priceMax].map(
+            (val, i) => (
+              <Input
+                key={i}
+                placeholder={
+                  [
+                    "Search product...",
+                    "Category",
+                    "Status",
+                    "Min price",
+                    "Max price",
+                  ][i]
+                }
+                value={val}
+                onChange={(e) => {
+                  const setters = [
+                    setGlobalFilter,
+                    setCategoryFilter,
+                    setStatusFilter,
+                    setPriceMin,
+                    setPriceMax,
+                  ];
+                  setters[i](e.target.value);
+                }}
+                className="border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
+              />
+            )
+          )}
         </div>
 
-        {/* Bulk actions + Column toggle */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <div className="flex flex-row items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <span className="text-sm">Selected: {selectedRows}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Selected: {selectedRows}
+            </span>
             <Button
               variant="destructive"
+              size="sm"
               disabled={selectedRows === 0}
+              className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
               onClick={() => {
-                if (
-                  confirm(`Run bulk delete on ${selectedRows} items (mock)?`)
-                ) {
+                if (confirm(`Run bulk delete on ${selectedRows} items (mock)?`))
                   alert("Bulk deleted (mock)");
-                }
               }}
             >
               Bulk Delete
             </Button>
           </div>
 
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Button variant="outline" size="sm">
-                    <ArrowLeftRight /> View
-                  </Button>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Column Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {table.getAllLeafColumns().map((col) => (
-                  <DropdownMenuCheckboxItem
-                    key={col.id}
-                    checked={col.getIsVisible()}
-                    onCheckedChange={() => col.toggleVisibility()}
-                    disabled={col.id === "select" || col.id === "actions"}
-                  >
-                    {col.columnDef.header ?? col.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-300 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                <ArrowLeftRight className="h-4 w-4 mr-2" /> View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <DropdownMenuLabel className="text-gray-900 dark:text-gray-100">
+                Column Options
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+              {table.getAllLeafColumns().map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onCheckedChange={() => col.toggleVisibility()}
+                  disabled={col.id === "select" || col.id === "actions"}
+                  className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {col.columnDef.header ?? col.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Table */}
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white shadow-sm dark:bg-gray-800 transition-colors duration-300">
+          <Table className="min-w-full">
+            <TableHeader className="bg-gray-100 dark:bg-gray-800">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow
+                  key={headerGroup.id}
+                  className="border-b border-gray-200 dark:border-gray-700"
+                >
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div
-                          className="flex items-center gap-2"
-                          onClick={header.column.getToggleSortingHandler?.()}
-                          style={{
-                            cursor: header.column.getCanSort()
-                              ? "pointer"
-                              : "default",
-                          }}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {{
-                            asc: <span className="ml-1">↑</span>,
-                            desc: <span className="ml-1">↓</span>,
-                          }[header.column.getIsSorted() ?? ""] ?? null}
-                        </div>
-                      </div>
+                    <TableHead
+                      key={header.id}
+                      className="text-gray-900 dark:text-gray-100 font-semibold"
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                     </TableHead>
                   ))}
                 </TableRow>
               ))}
             </TableHeader>
+
             <TableBody>
               {isLoading || isFetching ? (
-                Array.from({ length: 10 }).map((_, index) => (
-                  <TableRow key={index}>
+                Array.from({ length: 10 }).map((_, i) => (
+                  <TableRow
+                    key={i}
+                    className="border-b border-gray-200 dark:border-gray-700"
+                  >
                     {columns.map((col) => (
-                      <TableCell key={col.id} className="px-4 py-3">
-                        <Skeleton className="h-8 w-full" />
+                      <TableCell key={col?.id}>
+                        <Skeleton className="h-8 w-full bg-gray-200 dark:bg-gray-700" />
                       </TableCell>
                     ))}
                   </TableRow>
@@ -459,16 +421,22 @@ export default function ProductListPage() {
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="text-center py-6"
+                    className="text-center py-6 text-gray-500 dark:text-gray-400"
                   >
                     No products found.
                   </TableCell>
                 </TableRow>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="hover:bg-muted/50">
+                  <TableRow
+                    key={row.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
+                  >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-3">
+                      <TableCell
+                        key={cell?.id}
+                        className="text-gray-700 dark:text-gray-300"
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -482,36 +450,44 @@ export default function ProductListPage() {
           </Table>
         </div>
 
-        {/* Pagination controls */}
-        <div className="flex items-center justify-between gap-3">
-        <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => handlePageClick(currentPage - 1)}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
+        <div className="flex justify-center items-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageClick(page - 1)}
+                  className={`${
+                    page === 1 ? "pointer-events-none opacity-50" : ""
+                  } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800`}
+                />
+              </PaginationItem>
 
-          {getPages().map((page) => (
-            <PaginationItem key={page}>
-              <PaginationLink
-                isActive={page === currentPage}
-                onClick={() => handlePageClick(page)}
-              >
-                {page}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    isActive={i + 1 === page}
+                    onClick={() => handlePageClick(i + 1)}
+                    className={`${
+                      i + 1 === page
+                        ? "bg-blue-600 text-white dark:bg-blue-500 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    } border-gray-300 dark:border-gray-700`}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
 
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => handlePageClick(currentPage + 1)}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageClick(page + 1)}
+                  className={`${
+                    page === totalPages ? "pointer-events-none opacity-50" : ""
+                  } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800`}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>
