@@ -148,7 +148,10 @@ const Page = () => {
                     control={control}
                     rules={{ required: "Category is required" }}
                     render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -168,7 +171,10 @@ const Page = () => {
                 </Field>
 
                 <div className="flex justify-end mt-4">
-                  <Button onClick={nextStep} className="bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    onClick={nextStep}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
                     Next →
                   </Button>
                 </div>
@@ -218,9 +224,7 @@ const Page = () => {
                             checked={field.value}
                             onCheckedChange={field.onChange}
                           />
-                          <Label>
-                            {field.value ? "Active" : "Inactive"}
-                          </Label>
+                          <Label>{field.value ? "Active" : "Inactive"}</Label>
                         </>
                       )}
                     />
@@ -231,7 +235,10 @@ const Page = () => {
                   <Button variant="outline" onClick={prevStep}>
                     ← Back
                   </Button>
-                  <Button onClick={nextStep} className="bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    onClick={nextStep}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
                     Next →
                   </Button>
                 </div>

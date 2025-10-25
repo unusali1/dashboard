@@ -30,7 +30,7 @@ import {
 
 const fetchOrders = async () => {
   const res = await axios.get(
-    "https://68f9c1b2ef8b2e621e7d4f9a.mockapi.io/api/v1/orders"
+    "https://68f9c1b2ef8b2e621e7d4f9a.mockapi.io/ap1/v1/orders"
   );
   return res.data;
 };

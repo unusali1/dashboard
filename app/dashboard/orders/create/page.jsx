@@ -64,6 +64,7 @@ const OrderCreatePage = () => {
 
 
   const onSubmit = (data) => {
+    console.log("order data:",data);
     mutation.mutate({ ...data, totalAmount, createdAt: new Date().toISOString() });
   };
 
